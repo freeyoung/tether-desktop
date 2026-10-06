@@ -6,6 +6,8 @@ A desktop peer for [Tether](https://github.com/zackb/tether), for macOS and Wind
 
 The project started from one need: one set of apps that lets all the devices at hand share the clipboard and send files to each other.
 
+<img src="assets/overview.svg" width="760" alt="The iPhone connects to one of the computers at a time: the Mac, a Windows PC or a Linux computer. The computers share the clipboard and files with each other. Only tetherd on Linux also talks to the iPhone over Bluetooth, for messages, notifications and calls.">
+
 Only the Wi-Fi features of Tether are here. Messages, notifications, calls and AirPods need Bluetooth, which only `tetherd` has.
 
 ## Features
@@ -15,6 +17,8 @@ Only the Wi-Fi features of Tether are here. Messages, notifications, calls and A
 - Receives files into Downloads. Sends files from the menu, from Finder (Services > Send with Tether Desktop) or from Explorer (Send to > Tether Desktop).
 - Opens links that the iPhone shares.
 - Tells you when a new version is out.
+
+<img src="assets/menu-macos.png" width="675" alt="The menu on macOS: three paired devices, and the submenu of the connected one, with Send Files.">
 
 ## Install
 

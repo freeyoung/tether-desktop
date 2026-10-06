@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" viewBox="0 0 760 400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .box { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1.5; }
+    .glyph { fill: none; stroke: #1f6feb; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .name { fill: #1f2328; font-size: 16px; font-weight: 600; }
+    .note { fill: #59636e; font-size: 13px; }
+    .link { stroke: #1f6feb; stroke-width: 2.5; fill: none; }
+    .phone-link { stroke: #59636e; stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+    .label { fill: #1f6feb; font-size: 13px; font-weight: 600; }
+    .phone-label { fill: #59636e; font-size: 13px; font-weight: 600; }
+    .bt-link { stroke: #8250df; stroke-width: 2.5; stroke-dasharray: 2 5; stroke-linecap: round; fill: none; }
+    .bt-label { fill: #8250df; font-size: 13px; font-weight: 600; }
+    .halo { fill: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .box { fill: #161b22; stroke: #3d444d; }
+      .glyph { stroke: #4493f8; }
+      .name { fill: #f0f6fc; }
+      .note { fill: #9198a1; }
+      .link { stroke: #4493f8; }
+      .phone-link { stroke: #9198a1; }
+      .label { fill: #4493f8; }
+      .phone-label { fill: #9198a1; }
+      .bt-link { stroke: #ab7df8; }
+      .bt-label { fill: #ab7df8; }
+      .halo { fill: #0d1117; }
+    }
+  </style>
+
+  <!-- The iPhone connects to any 1 of the computers at a time. -->
+  <path class="phone-link" d="M 340 120 L 120 230"/>
+  <path class="phone-link" d="M 380 120 L 380 230"/>
+  <path class="phone-link" d="M 420 120 L 640 230"/>
+  <rect class="halo" x="292" y="158" width="176" height="40" rx="4"/>
+  <text class="phone-label" x="380" y="174" text-anchor="middle">to one computer at a time:</text>
+  <text class="phone-label" x="380" y="192" text-anchor="middle">clipboard, files, links</text>
+
+  <!-- Bluetooth: only tetherd (BlueZ) has it. -->
+  <path class="bt-link" d="M 455 60 C 640 60, 700 120, 700 230"/>
+  <rect class="halo" x="550" y="88" width="196" height="40" rx="4"/>
+  <text class="bt-label" x="648" y="104" text-anchor="middle">Bluetooth, tetherd only:</text>
+  <text class="bt-label" x="648" y="122" text-anchor="middle">messages, notifications, calls</text>
+
+  <!-- The computers share the clipboard and files with each other. -->
+  <path class="link" d="M 200 285 L 300 285"/>
+  <path class="link" d="M 460 285 L 560 285"/>
+  <path class="link" d="M 120 340 Q 380 420 640 340"/>
+  <rect class="halo" x="318" y="368" width="124" height="22" rx="4"/>
+  <text class="label" x="380" y="384" text-anchor="middle">clipboard and files</text>
+
+  <!-- iPhone -->
+  <rect class="box" x="305" y="10" width="150" height="110" rx="14"/>
+  <rect class="glyph" x="366" y="26" width="28" height="48" rx="6"/>
+  <text class="name" x="380" y="96" text-anchor="middle">iPhone</text>
+  <text class="note" x="380" y="113" text-anchor="middle">Tether app</text>
+
+  <!-- Mac -->
+  <rect class="box" x="40" y="230" width="160" height="110" rx="14"/>
+  <rect class="glyph" x="98" y="246" width="44" height="30" rx="4"/>
+  <path class="glyph" d="M 120 276 V 286 M 108 289 H 132"/>
+  <text class="name" x="120" y="316" text-anchor="middle">Mac</text>
+  <text class="note" x="120" y="333" text-anchor="middle">Tether Desktop</text>
+
+  <!-- Windows PC -->
+  <rect class="box" x="300" y="230" width="160" height="110" rx="14"/>
+  <rect class="glyph" x="358" y="246" width="44" height="30" rx="4"/>
+  <path class="glyph" d="M 380 276 V 286 M 368 289 H 392"/>
+  <text class="name" x="380" y="316" text-anchor="middle">Windows PC</text>
+  <text class="note" x="380" y="333" text-anchor="middle">Tether Desktop</text>
+
+  <!-- Linux -->
+  <rect class="box" x="560" y="230" width="160" height="110" rx="14"/>
+  <rect class="glyph" x="618" y="246" width="44" height="30" rx="4"/>
+  <path class="glyph" d="M 640 276 V 286 M 628 289 H 652"/>
+  <text class="name" x="640" y="316" text-anchor="middle">Linux</text>
+  <text class="note" x="640" y="333" text-anchor="middle">tetherd</text>
+</svg>

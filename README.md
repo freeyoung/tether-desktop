@@ -16,6 +16,18 @@ Only the Wi-Fi features of Tether are here. Messages, notifications, calls and A
 - Opens links that the iPhone shares.
 - Tells you when a new version is out.
 
+## Install
+
+Download the files from [Releases](../../releases). They are not signed by Apple or Microsoft.
+
+macOS 15 or later on Apple silicon: open the dmg and drag TetherDesktop to Applications. The app is not notarized, so run this once before the first start:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/TetherDesktop.app
+```
+
+Windows 11 x64: put the exe in `%LOCALAPPDATA%\Programs\TetherDesktop\` and start it. SmartScreen warns about it: choose More info, then Run anyway. Smart App Control blocks unsigned apps, so it must be off.
+
 ## Setup
 
 On the first start, allow the network access that the system asks for: Local Network on macOS, private networks in the Windows firewall. If you closed the Windows prompt, the menu item Firewall Help copies a command that allows port 5134.
@@ -70,6 +82,12 @@ go test -race ./core
 ```
 
 The tests run several engines on one machine: a fake iPhone, two computers and a ring of three. `scripts/tetherd-container.sh` runs a real `tetherd` in Docker for `go/core/tetherd_test.go`. `go run ./cmd/tether-browse` lists the Tether services on the network, and `cmd/tether-headless` runs the engine without a user interface.
+
+### Release
+
+CI runs the tests and builds both apps. Push a tag such as `v0.2.0`, and `.github/workflows/release.yml` builds the dmg and the exe and publishes them. It signs the app with the certificate in the secrets `MAC_CERT_P12` and `MAC_CERT_PASSWORD`.
+
+Each release also publishes `update.json`, which the apps read once a day. To force an update, for example after a security fix, raise `scripts/min-version` before the release. Older apps then stop syncing and ask for the update, and newer apps close sessions with older ones.
 
 ## License
 

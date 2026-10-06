@@ -1,0 +1,185 @@
+name: Release
+
+# Push a tag v<version> (v0.2.0) to build the macOS app (Apple silicon, a
+# dmg) and the Windows exe (x64), and publish them in a GitHub Release with
+# SHA256SUMS and update.json. A tag with a suffix (v0.3.0-rc.1) makes a
+# prerelease. The version comes from the tag.
+#
+# The apps read update.json of the latest release (not a prerelease) once
+# a day: {"latest": the tag's version, "min_supported": scripts/min-version}.
+# An app older than min_supported stops syncing until the user updates it.
+#
+# Each build job uploads into a draft release that the first job makes, and
+# the last job publishes it. A failed run leaves the draft: run the tag
+# again, and the uploads replace its files. Run the workflow by hand to
+# check that it builds: such a run uploads nothing, so it uses none of the
+# account's artifact storage.
+#
+# Secrets:
+#   MAC_CERT_P12, MAC_CERT_PASSWORD   the self-signed "Tether Desktop Local
+#     Code Signing" certificate, as base64 of a .p12, and its password. With
+#     the same certificate in every release, macOS keeps the Local Network
+#     permission across updates. A tag run fails without it.
+#
+# There is no Apple Developer ID, so the app is not notarized, and no
+# Windows code signing certificate. The README tells users what to do.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    name: Make the draft release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Make the draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          gh release view "$tag" > /dev/null 2>&1 ||
+            gh release create "$tag" --draft --title "Tether Desktop ${tag#v}" --generate-notes
+
+  mac:
+    name: Build for macOS
+    needs: draft
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      # The whole history: the build number is the number of commits.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go/go.mod
+          cache: false
+
+      - name: Version
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then v="${GITHUB_REF_NAME#v}"; else v=0.0.0-dev; fi
+          echo "TETHER_VERSION=$v" >> "$GITHUB_ENV"
+
+      # build-macos.sh signs with the certificate when a keychain on the
+      # search list holds it. A keychain of the run's own takes the .p12,
+      # and the system is told to trust the certificate for code signing.
+      - name: Import the signing certificate
+        env:
+          MAC_CERT_P12: ${{ secrets.MAC_CERT_P12 }}
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+        run: |
+          if [ -z "$MAC_CERT_P12" ]; then
+            if [ "$GITHUB_REF_TYPE" = tag ]; then
+              echo "::error::MAC_CERT_P12 is not set"
+              exit 1
+            fi
+            echo "No signing certificate: the app is signed ad hoc."
+            exit 0
+          fi
+          p12="$RUNNER_TEMP/signing.p12"
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          echo "$MAC_CERT_P12" | base64 --decode > "$p12"
+          security create-keychain -p "" "$keychain"
+          security set-keychain-settings "$keychain"
+          security unlock-keychain -p "" "$keychain"
+          security import "$p12" -k "$keychain" -P "$MAC_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" "$keychain" > /dev/null
+          # Add it to the keychains on the search list; each one is 1 word.
+          existing=$(security list-keychains -d user | tr -d '"')
+          # shellcheck disable=SC2086
+          security list-keychains -d user -s "$keychain" $existing
+          openssl pkcs12 -in "$p12" -passin env:MAC_CERT_PASSWORD -nokeys -legacy -out "$RUNNER_TEMP/signing.pem" 2>/dev/null ||
+            openssl pkcs12 -in "$p12" -passin env:MAC_CERT_PASSWORD -nokeys -out "$RUNNER_TEMP/signing.pem"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/signing.pem"
+          echo "TETHER_REQUIRE_SIGNING=1" >> "$GITHUB_ENV"
+
+      - name: Build and package
+        run: |
+          scripts/build-macos.sh
+          app=build/TetherDesktop.app
+          codesign --verify --strict "$app"
+          codesign -d -r- "$app" 2>&1 | grep designated
+          mkdir -p dist
+          stage=$(mktemp -d)
+          cp -R "$app" "$stage/"
+          ln -s /Applications "$stage/Applications"
+          hdiutil create -quiet -volname "Tether Desktop" -srcfolder "$stage" -format ULFO \
+            "dist/TetherDesktop-$TETHER_VERSION-mac-arm64.dmg"
+          ls -l dist
+
+      - name: Upload to the draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+
+  # The Windows exe needs no cgo, so Linux builds it.
+  windows:
+    name: Build for Windows
+    needs: draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go/go.mod
+          cache: false
+
+      - name: Build
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then v="${GITHUB_REF_NAME#v}"; else v=0.0.0; fi
+          TETHER_VERSION="$v" scripts/build-windows.sh
+          mkdir -p dist
+          cp build/go/TetherDesktop.exe "dist/TetherDesktop-$v-windows-x64.exe"
+          ls -l dist
+
+      - name: Upload to the draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+
+  publish:
+    name: Publish the release
+    if: github.ref_type == 'tag'
+    needs: [mac, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Add SHA256SUMS and update.json, and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          # Not assets/: the checkout has a folder of that name.
+          mkdir dist
+          gh release download "$tag" --dir dist --pattern 'TetherDesktop-*'
+          (cd dist && sha256sum TetherDesktop-* > SHA256SUMS && cat SHA256SUMS)
+          min=$(tr -d '[:space:]' < scripts/min-version)
+          printf '{"latest": "%s", "min_supported": "%s"}\n' "${tag#v}" "$min" > dist/update.json
+          cat dist/update.json
+          gh release upload "$tag" dist/SHA256SUMS dist/update.json --clobber
+          prerelease=false
+          case "$tag" in *-*) prerelease=true ;; esac
+          gh release edit "$tag" --draft=false --prerelease="$prerelease"

@@ -208,6 +208,30 @@ func TestShareExtensionStyleConnection(t *testing.T) {
 	}
 }
 
+// The share extension of the iPhone app (Copy to Clipboard): a second
+// connection from the paired phone, while the app's own one is up. It sends
+// an image only when our hello lists clipboard_image, and waits for
+// file_status.
+func TestShareExtensionCopiesAnImage(t *testing.T) {
+	n, p := phoneSetup(t)
+	p.pair(n)
+	ext := &fakePhone{t: t, identity: p.identity, queue: NewQueue(nil)}
+	t.Cleanup(func() { ext.disconnect(); ext.queue.Stop() })
+	ext.connect(n.port, true)
+	ext.send(Hello("clipboard_image"))
+	if m := ext.expect("hello"); !slices.Contains(m.Features, "clipboard_image") {
+		t.Fatal(m.Features)
+	}
+	png := randomPNG(200_000)
+	ext.sendFile(png, "clipboard.png", "set")
+	if m := ext.expect("file_status"); m.Status != "success" {
+		t.Fatal(m.Status)
+	}
+	if !eventually(5*time.Second, func() bool { return n.clipboard.holds(PNGContent(png)) }) {
+		t.Fatal("not on the clipboard")
+	}
+}
+
 func TestStopClosesSessionsSoPeersSeeIt(t *testing.T) {
 	n, p := phoneSetup(t)
 	p.pair(n)

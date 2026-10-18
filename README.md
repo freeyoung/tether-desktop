@@ -4,11 +4,11 @@
 
 A desktop peer for [Tether](https://github.com/zackb/tether), for macOS and Windows. The iPhone app sees it as one more computer, like `tetherd` on Linux, and paired computers share the clipboard and files with each other: copy on the Mac, paste on Windows or Linux.
 
-The project started from one need: one set of apps that lets all the devices at hand share the clipboard and send files to each other.
+The project started from one need: one set of apps that lets all the devices at hand share the clipboard and send files to each other. [Tether for Android](https://github.com/freeyoung/tether-android) brings an Android phone into the set.
 
 <img src="assets/overview.svg" width="760" alt="The iPhone connects to one of the computers at a time: the Mac, a Windows PC or a Linux computer. The computers share the clipboard and files with each other. Only tetherd on Linux also talks to the iPhone over Bluetooth, for messages, notifications and calls.">
 
-Only the Wi-Fi features of Tether are here. Messages, notifications, calls and AirPods need Bluetooth, which only `tetherd` has.
+Tether Desktop is not an official app of Tether, and the authors of Tether do not make it. Only the Wi-Fi features of Tether are here. Messages, notifications, calls and AirPods need Bluetooth, which only `tetherd` has.
 
 ## Features
 
@@ -63,7 +63,7 @@ Received files go to Downloads, marked as downloaded from the internet.
 
 Both apps are in Go, so that one code base serves both platforms. A Swift app for macOS would have meant two code bases.
 
-- [tether-core-go](https://github.com/freeyoung/tether-core-go): the engine, a Go module of its own, which Tether for Android uses too. It does TLS, pairing, sessions, clipboard sync and files, and has no platform code.
+- [tether-core-go](https://github.com/freeyoung/tether-core-go): the engine, a Go module of its own, which [Tether for Android](https://github.com/freeyoung/tether-android) uses too. It does TLS, pairing, sessions, clipboard sync and files, and has no platform code.
 - `go/cmd/tetherdesktop`: the app. `tray.go` is the menu for both platforms; `*_windows.go` uses Win32, and `*_darwin.go` with `macos_darwin.m` uses AppKit.
 - `go/third_party/systray`: a patched copy of fyne.io/systray, see its `PATCHED.md`.
 

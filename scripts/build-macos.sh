@@ -14,8 +14,6 @@ root=$(dirname "$here")
 cd "$root"
 
 version=${TETHER_VERSION:-0.2.0}
-# The oldest version that may still run: see scripts/min-version.
-min_version=$(tr -d '[:space:]' < "$here/min-version")
 # The build number grows with each commit. macOS keys cached app icons (for
 # notifications, for example) to the bundle version, so a new icon needs it.
 build=$(git -C "$root" rev-list --count HEAD 2>/dev/null || echo 1)
@@ -24,8 +22,7 @@ bin="$root/build/go/TetherDesktop-darwin"
 
 (cd "$root/go" && CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 MACOSX_DEPLOYMENT_TARGET=15.0 \
     CGO_CFLAGS="-O2 -mmacosx-version-min=15.0" \
-    go build -trimpath -o "$bin" -ldflags "-s -w -X github.com/freeyoung/tether-core-go/core.Version=$version \
-    -X github.com/freeyoung/tether-core-go/core.MinPeerVersion=$min_version" ./cmd/tetherdesktop)
+    go build -trimpath -o "$bin" -ldflags "-s -w -X main.appVersion=$version" ./cmd/tetherdesktop)
 
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"

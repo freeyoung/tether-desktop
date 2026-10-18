@@ -62,7 +62,7 @@ type app struct {
 	greenDot, grayDot []byte
 
 	updateMu sync.Mutex
-	update   core.UpdateState
+	update   UpdateState
 	latest   string
 	outdated map[string]bool // peers we told the user about
 }
@@ -79,7 +79,7 @@ func newApp(engine *core.Engine, clipboard core.Clipboard) *app {
 func (a *app) menuLoop() {
 	for range a.refresh {
 		time.Sleep(300 * time.Millisecond)
-		if state, latest := a.updateState(); state == core.UpdateRequired {
+		if state, latest := a.updateState(); state == UpdateRequired {
 			a.buildUpdateRequired(latest)
 			continue
 		}
@@ -118,12 +118,12 @@ func short(fp string) string { return fp[:8] + "…" + fp[len(fp)-8:] }
 
 func (a *app) build(snap core.Snapshot) {
 	systray.ResetMenu()
-	status := "Tether Desktop " + core.Version + ": not listening"
+	status := "Tether Desktop " + appVersion + ": not listening"
 	if snap.Listening {
-		status = "Tether Desktop " + core.Version + ": listening"
+		status = "Tether Desktop " + appVersion + ": listening"
 	}
 	disabled(status)
-	if state, latest := a.updateState(); state == core.UpdateAvailable {
+	if state, latest := a.updateState(); state == UpdateAvailable {
 		onClick(systray.AddMenuItem("Update Available: Version "+latest+"…", ""), func() { openURL(releasesURL) })
 	}
 	onClick(systray.AddMenuItem("This "+thisDevice+": "+short(snap.Fingerprint)+"  (Copy)", ""), func() {
@@ -366,7 +366,8 @@ func (a *app) Failed(message string) { go showError(message) }
 
 func (a *app) StateChanged() { a.requestRefresh() }
 
-// PeerOutdated: tell the user once for each peer.
+// PeerOutdated: tell the user once for each peer. version is the version of
+// the peer's engine.
 func (a *app) PeerOutdated(name, version string) {
 	a.updateMu.Lock()
 	told := a.outdated[name]
@@ -376,7 +377,7 @@ func (a *app) PeerOutdated(name, version string) {
 	a.outdated[name] = true
 	a.updateMu.Unlock()
 	if !told {
-		go notify(name+" needs an update", "It runs Tether Desktop "+version+", which no longer works with this "+thisDevice+".")
+		go notify(name+" needs an update", "Its engine, version "+version+", no longer works with this "+thisDevice+".")
 	}
 }
 
@@ -393,13 +394,13 @@ const (
 // checkUpdates looks for a new version soon after the start, then once a
 // day.
 func (a *app) checkUpdates() {
-	url, ok := updateSource(core.Version, os.Getenv("TETHER_UPDATE_URL"))
+	url, ok := updateSource(appVersion, os.Getenv("TETHER_UPDATE_URL"))
 	if !ok {
 		return
 	}
 	time.Sleep(10 * time.Second)
 	for {
-		if info, err := core.FetchUpdateInfo(context.Background(), url); err != nil {
+		if info, err := FetchUpdateInfo(context.Background(), url); err != nil {
 			logLine(err.Error())
 		} else {
 			a.applyUpdate(info)
@@ -421,8 +422,8 @@ func updateSource(version, override string) (string, bool) {
 	return updateURL, true
 }
 
-func (a *app) applyUpdate(info core.UpdateInfo) {
-	state := info.State(core.Version)
+func (a *app) applyUpdate(info UpdateInfo) {
+	state := info.State(appVersion)
 	a.updateMu.Lock()
 	before := a.update
 	a.update, a.latest = state, info.Latest
@@ -430,10 +431,10 @@ func (a *app) applyUpdate(info core.UpdateInfo) {
 	if state == before {
 		return
 	}
-	if state == core.UpdateRequired {
+	if state == UpdateRequired {
 		// This version no longer works with the others: stop syncing
 		// until the user installs the update.
-		logLine(fmt.Sprintf("version %s is required, this is %s: stopping", info.MinSupported, core.Version))
+		logLine(fmt.Sprintf("version %s is required, this is %s: stopping", info.MinSupported, appVersion))
 		a.engine.Stop()
 		go func() {
 			showError(fmt.Sprintf("Tether Desktop %s or later is required. This version no longer works with "+
@@ -444,7 +445,7 @@ func (a *app) applyUpdate(info core.UpdateInfo) {
 	a.requestRefresh()
 }
 
-func (a *app) updateState() (core.UpdateState, string) {
+func (a *app) updateState() (UpdateState, string) {
 	a.updateMu.Lock()
 	defer a.updateMu.Unlock()
 	return a.update, a.latest
@@ -454,7 +455,7 @@ func (a *app) updateState() (core.UpdateState, string) {
 // update.
 func (a *app) buildUpdateRequired(latest string) {
 	systray.ResetMenu()
-	disabled("Tether Desktop " + core.Version + ": update required")
+	disabled("Tether Desktop " + appVersion + ": update required")
 	onClick(systray.AddMenuItem("Download Version "+latest+"…", ""), func() { openURL(releasesURL) })
 	systray.AddSeparator()
 	onClick(systray.AddMenuItem("Quit Tether Desktop", ""), systray.Quit)

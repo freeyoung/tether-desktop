@@ -93,7 +93,7 @@ The tests of the engine are in [tether-core-go](https://github.com/freeyoung/tet
 
 CI tests and builds both apps. Push a tag such as `v0.2.0`, and `.github/workflows/release.yml` builds the dmg and the exe and publishes them. It signs the app with the certificate in the secrets `MAC_CERT_P12` and `MAC_CERT_PASSWORD`.
 
-Each release also publishes `update.json`, which the apps read once a day. To force an update, for example after a security fix, raise `scripts/min-version` before the release. Older apps then stop syncing and ask for the update, and newer apps close sessions with older ones.
+Each release also publishes `update.json`, which the apps read once a day. To force an update, for example after a security fix, raise `scripts/min-version` before the release. Older apps then stop syncing and ask for the update. Peers check each other by the version of the engine instead: a release of [tether-core-go](https://github.com/freeyoung/tether-core-go) raises its `MinPeerVersion` when older engines must no longer sync.
 
 ## License
 

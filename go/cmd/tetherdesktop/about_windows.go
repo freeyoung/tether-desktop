@@ -49,9 +49,9 @@ func showAbout() {
 	icon, _, _ := pLoadImage.Call(instance, uintptr(unsafe.Pointer(iconName)), imageIcon, 0, 0, lrDefaultSize)
 
 	title, _ := windows.UTF16PtrFromString("About Tether Desktop")
-	heading, _ := windows.UTF16PtrFromString("Tether Desktop " + core.Version)
+	heading, _ := windows.UTF16PtrFromString("Tether Desktop " + appVersion)
 	content, _ := windows.UTF16PtrFromString("A desktop peer for Tether: the clipboard and files, shared between " +
-		"your iPhone and your computers.\n\n<a href=\"" + projectURL + "\">" + projectURL + "</a>")
+		"your iPhone and your computers.\n\nEngine " + core.EngineVersion() + ".\n\n<a href=\"" + projectURL + "\">" + projectURL + "</a>")
 	footer, _ := windows.UTF16PtrFromString("© 2026 Eric Qian. MIT License.")
 
 	// TASKDIALOGCONFIG is packed to 1 byte in commctrl.h, so it is written

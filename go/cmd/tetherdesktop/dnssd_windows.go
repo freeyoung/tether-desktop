@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"github.com/freeyoung/tether-core-go"
+	"github.com/freeyoung/tether-core-go/core"
 )
 
 var (

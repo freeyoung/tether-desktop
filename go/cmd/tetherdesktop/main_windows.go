@@ -14,7 +14,7 @@ import (
 	"github.com/ncruces/zenity"
 	"golang.org/x/sys/windows"
 
-	"github.com/freeyoung/tether-core-go"
+	"github.com/freeyoung/tether-core-go/core"
 )
 
 //go:embed AppIcon.ico

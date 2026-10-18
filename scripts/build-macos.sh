@@ -24,8 +24,8 @@ bin="$root/build/go/TetherDesktop-darwin"
 
 (cd "$root/go" && CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 MACOSX_DEPLOYMENT_TARGET=15.0 \
     CGO_CFLAGS="-O2 -mmacosx-version-min=15.0" \
-    go build -trimpath -o "$bin" -ldflags "-s -w -X github.com/freeyoung/tether-core-go.Version=$version \
-    -X github.com/freeyoung/tether-core-go.MinPeerVersion=$min_version" ./cmd/tetherdesktop)
+    go build -trimpath -o "$bin" -ldflags "-s -w -X github.com/freeyoung/tether-core-go/core.Version=$version \
+    -X github.com/freeyoung/tether-core-go/core.MinPeerVersion=$min_version" ./cmd/tetherdesktop)
 
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"

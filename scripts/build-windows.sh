@@ -14,5 +14,5 @@ go run github.com/tc-hib/go-winres@v0.3.3 make --in winres/winres.json --arch am
     --product-version "$version" --file-version "$version"
 cd "$root/go"
 GOOS=windows GOARCH=amd64 go build -trimpath -o "$root/build/go/TetherDesktop.exe" -ldflags "-s -w -H windowsgui \
-    -X github.com/freeyoung/tether-core-go.Version=$version -X github.com/freeyoung/tether-core-go.MinPeerVersion=$min_version" ./cmd/tetherdesktop
+    -X github.com/freeyoung/tether-core-go/core.Version=$version -X github.com/freeyoung/tether-core-go/core.MinPeerVersion=$min_version" ./cmd/tetherdesktop
 echo "built $root/build/go/TetherDesktop.exe"

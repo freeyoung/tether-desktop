@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"tetherdesktop/core"
+	"github.com/freeyoung/tether-core-go"
 )
 
 // The About window is a task dialog: unlike a message box, it shows the

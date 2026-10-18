@@ -63,11 +63,11 @@ Received files go to Downloads, marked as downloaded from the internet.
 
 Both apps are in Go, so that one code base serves both platforms. A Swift app for macOS would have meant two code bases.
 
-- `go/core`: the engine. It does TLS, pairing, sessions, clipboard sync and files, and has no platform code.
+- [tether-core-go](https://github.com/freeyoung/tether-core-go): the engine, a Go module of its own, which Tether for Android uses too. It does TLS, pairing, sessions, clipboard sync and files, and has no platform code.
 - `go/cmd/tetherdesktop`: the app. `tray.go` is the menu for both platforms; `*_windows.go` uses Win32, and `*_darwin.go` with `macos_darwin.m` uses AppKit.
 - `go/third_party/systray`: a patched copy of fyne.io/systray, see its `PATCHED.md`.
 
-[docs/protocol.md](docs/protocol.md) lists the rules that `go/core` follows, so that several computers sync without loops.
+[protocol.md](https://github.com/freeyoung/tether-core-go/blob/main/docs/protocol.md) in tether-core-go lists the rules that the engine follows, so that several computers sync without loops.
 
 ### Build
 
@@ -80,16 +80,11 @@ scripts/build-windows.sh   # build/go/TetherDesktop.exe: on any OS
 
 ### Test
 
-```bash
-cd go
-go test -race ./core
-```
-
-The tests run several engines on one machine: a fake iPhone, two computers and a ring of three. `scripts/tetherd-container.sh` runs a real `tetherd` in Docker for `go/core/tetherd_test.go`. `go run ./cmd/tether-browse` lists the Tether services on the network, and `cmd/tether-headless` runs the engine without a user interface.
+The tests are in [tether-core-go](https://github.com/freeyoung/tether-core-go), with the engine. They run several engines on one machine: a fake iPhone, two computers and a ring of three. Its `cmd/tether-browse` lists the Tether services on the network, and `cmd/tether-headless` runs the engine without a user interface.
 
 ### Release
 
-CI runs the tests and builds both apps. Push a tag such as `v0.2.0`, and `.github/workflows/release.yml` builds the dmg and the exe and publishes them. It signs the app with the certificate in the secrets `MAC_CERT_P12` and `MAC_CERT_PASSWORD`.
+CI vets and builds both apps. Push a tag such as `v0.2.0`, and `.github/workflows/release.yml` builds the dmg and the exe and publishes them. It signs the app with the certificate in the secrets `MAC_CERT_P12` and `MAC_CERT_PASSWORD`.
 
 Each release also publishes `update.json`, which the apps read once a day. To force an update, for example after a security fix, raise `scripts/min-version` before the release. Older apps then stop syncing and ask for the update, and newer apps close sessions with older ones.
 

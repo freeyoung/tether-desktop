@@ -13,7 +13,7 @@ import (
 	"fyne.io/systray"
 	"github.com/ncruces/zenity"
 
-	"tetherdesktop/core"
+	"github.com/freeyoung/tether-core-go"
 )
 
 // The Windows side of tray.go: zenity dialogs, toasts, and the menu items

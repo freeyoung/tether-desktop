@@ -23,7 +23,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"tetherdesktop/core"
+	"github.com/freeyoung/tether-core-go"
 )
 
 // The macOS side of tray.go, on top of macos_darwin.m: AppKit dialogs,

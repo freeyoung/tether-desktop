@@ -16,7 +16,7 @@ import (
 
 	"fyne.io/systray"
 
-	"tetherdesktop/core"
+	"github.com/freeyoung/tether-core-go"
 )
 
 // The menu bar icon, a template image: scripts/make-icons.swift draws it.

@@ -16,7 +16,7 @@ import (
 
 	"fyne.io/systray"
 
-	"tetherdesktop/core"
+	"github.com/freeyoung/tether-core-go"
 )
 
 const title = "Tether Desktop"

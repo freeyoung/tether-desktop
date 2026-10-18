@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"tetherdesktop/core"
+	"github.com/freeyoung/tether-core-go"
 )
 
 // windowsClipboard is the Windows clipboard behind the engine's Clipboard.

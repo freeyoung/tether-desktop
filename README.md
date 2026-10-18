@@ -6,7 +6,7 @@ A desktop peer for [Tether](https://github.com/zackb/tether), for macOS and Wind
 
 The project started from one need: one set of apps that lets all the devices at hand share the clipboard and send files to each other. [Tether for Android](https://github.com/freeyoung/tether-android) brings an Android phone into the set.
 
-<img src="assets/overview.svg" width="760" alt="The iPhone connects to one of the computers at a time: the Mac, a Windows PC or a Linux computer. The computers share the clipboard and files with each other. Only tetherd on Linux also talks to the iPhone over Bluetooth, for messages, notifications and calls.">
+<img src="assets/overview.svg" width="760" alt="The iPhone connects to one device at a time: a Mac, a Windows PC, an Android phone or a Linux computer. These devices share the clipboard and files with each other. Only tetherd on Linux also talks to the iPhone over Bluetooth, for messages, notifications and calls.">
 
 Tether Desktop is not an official app of Tether, and the authors of Tether do not make it. Only the Wi-Fi features of Tether are here. Messages, notifications, calls and AirPods need Bluetooth, which only `tetherd` has.
 

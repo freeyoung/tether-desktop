@@ -26,12 +26,13 @@
     }
   </style>
 
-  <!-- The iPhone connects to any 1 of the computers at a time. -->
-  <path class="phone-link" d="M 340 120 L 120 230"/>
-  <path class="phone-link" d="M 380 120 L 380 230"/>
-  <path class="phone-link" d="M 420 120 L 640 230"/>
+  <!-- The iPhone connects to one of the devices at a time. -->
+  <path class="phone-link" d="M 335 120 L 95 230"/>
+  <path class="phone-link" d="M 365 120 L 285 230"/>
+  <path class="phone-link" d="M 395 120 L 475 230"/>
+  <path class="phone-link" d="M 425 120 L 665 230"/>
   <rect class="halo" x="292" y="158" width="176" height="40" rx="4"/>
-  <text class="phone-label" x="380" y="174" text-anchor="middle">to one computer at a time:</text>
+  <text class="phone-label" x="380" y="174" text-anchor="middle">to one device at a time:</text>
   <text class="phone-label" x="380" y="192" text-anchor="middle">clipboard, files, links</text>
 
   <!-- Bluetooth: only tetherd (BlueZ) has it. -->
@@ -40,10 +41,11 @@
   <text class="bt-label" x="648" y="104" text-anchor="middle">Bluetooth, tetherd only:</text>
   <text class="bt-label" x="648" y="122" text-anchor="middle">messages, notifications, calls</text>
 
-  <!-- The computers share the clipboard and files with each other. -->
-  <path class="link" d="M 200 285 L 300 285"/>
-  <path class="link" d="M 460 285 L 560 285"/>
-  <path class="link" d="M 120 340 Q 380 420 640 340"/>
+  <!-- The devices with the engine and tetherd share the clipboard and files. -->
+  <path class="link" d="M 170 285 L 210 285"/>
+  <path class="link" d="M 360 285 L 400 285"/>
+  <path class="link" d="M 550 285 L 590 285"/>
+  <path class="link" d="M 95 340 Q 380 420 665 340"/>
   <rect class="halo" x="318" y="368" width="124" height="22" rx="4"/>
   <text class="label" x="380" y="384" text-anchor="middle">clipboard and files</text>
 
@@ -54,23 +56,29 @@
   <text class="note" x="380" y="113" text-anchor="middle">Tether app</text>
 
   <!-- Mac -->
-  <rect class="box" x="40" y="230" width="160" height="110" rx="14"/>
-  <rect class="glyph" x="98" y="246" width="44" height="30" rx="4"/>
-  <path class="glyph" d="M 120 276 V 286 M 108 289 H 132"/>
-  <text class="name" x="120" y="316" text-anchor="middle">Mac</text>
-  <text class="note" x="120" y="333" text-anchor="middle">Tether Desktop</text>
+  <rect class="box" x="20" y="230" width="150" height="110" rx="14"/>
+  <rect class="glyph" x="73" y="246" width="44" height="30" rx="4"/>
+  <path class="glyph" d="M 95 276 V 286 M 83 289 H 107"/>
+  <text class="name" x="95" y="316" text-anchor="middle">Mac</text>
+  <text class="note" x="95" y="333" text-anchor="middle">Tether Desktop</text>
 
   <!-- Windows PC -->
-  <rect class="box" x="300" y="230" width="160" height="110" rx="14"/>
-  <rect class="glyph" x="358" y="246" width="44" height="30" rx="4"/>
-  <path class="glyph" d="M 380 276 V 286 M 368 289 H 392"/>
-  <text class="name" x="380" y="316" text-anchor="middle">Windows PC</text>
-  <text class="note" x="380" y="333" text-anchor="middle">Tether Desktop</text>
+  <rect class="box" x="210" y="230" width="150" height="110" rx="14"/>
+  <rect class="glyph" x="263" y="246" width="44" height="30" rx="4"/>
+  <path class="glyph" d="M 285 276 V 286 M 273 289 H 297"/>
+  <text class="name" x="285" y="316" text-anchor="middle">Windows PC</text>
+  <text class="note" x="285" y="333" text-anchor="middle">Tether Desktop</text>
+
+  <!-- Android phone -->
+  <rect class="box" x="400" y="230" width="150" height="110" rx="14"/>
+  <rect class="glyph" x="461" y="244" width="28" height="46" rx="6"/>
+  <text class="name" x="475" y="316" text-anchor="middle">Android</text>
+  <text class="note" x="475" y="333" text-anchor="middle">Tether for Android</text>
 
   <!-- Linux -->
-  <rect class="box" x="560" y="230" width="160" height="110" rx="14"/>
-  <rect class="glyph" x="618" y="246" width="44" height="30" rx="4"/>
-  <path class="glyph" d="M 640 276 V 286 M 628 289 H 652"/>
-  <text class="name" x="640" y="316" text-anchor="middle">Linux</text>
-  <text class="note" x="640" y="333" text-anchor="middle">tetherd</text>
+  <rect class="box" x="590" y="230" width="150" height="110" rx="14"/>
+  <rect class="glyph" x="643" y="246" width="44" height="30" rx="4"/>
+  <path class="glyph" d="M 665 276 V 286 M 653 289 H 677"/>
+  <text class="name" x="665" y="316" text-anchor="middle">Linux</text>
+  <text class="note" x="665" y="333" text-anchor="middle">tetherd</text>
 </svg>

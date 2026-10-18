@@ -391,14 +391,11 @@ const (
 )
 
 // checkUpdates looks for a new version soon after the start, then once a
-// day. A build without a release version does not look.
+// day.
 func (a *app) checkUpdates() {
-	url := os.Getenv("TETHER_UPDATE_URL")
-	if url == "" {
-		if strings.HasSuffix(core.Version, "-dev") {
-			return
-		}
-		url = updateURL
+	url, ok := updateSource(core.Version, os.Getenv("TETHER_UPDATE_URL"))
+	if !ok {
+		return
 	}
 	time.Sleep(10 * time.Second)
 	for {
@@ -409,6 +406,19 @@ func (a *app) checkUpdates() {
 		}
 		time.Sleep(24 * time.Hour)
 	}
+}
+
+// updateSource tells where to look for updates: TETHER_UPDATE_URL when it is
+// set, else update.json of the latest release. A build without a release
+// version does not look.
+func updateSource(version, override string) (string, bool) {
+	if override != "" {
+		return override, true
+	}
+	if strings.HasSuffix(version, "-dev") {
+		return "", false
+	}
+	return updateURL, true
 }
 
 func (a *app) applyUpdate(info core.UpdateInfo) {

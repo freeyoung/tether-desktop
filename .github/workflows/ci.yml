@@ -1,7 +1,8 @@
 name: CI
 
 # Linux vets the app and builds the Windows exe, which needs no cgo. The
-# macOS app uses cgo with AppKit, so only a macOS runner can build it.
+# macOS app uses cgo with AppKit, so only a macOS runner can build it and
+# run the tests of the app.
 
 on:
   push:
@@ -31,7 +32,7 @@ jobs:
         run: scripts/build-windows.sh
 
   mac:
-    name: Build for macOS
+    name: Test, and build for macOS
     runs-on: macos-26
     timeout-minutes: 20
     steps:
@@ -41,9 +42,14 @@ jobs:
         with:
           go-version-file: go/go.mod
 
+      # The app builds only on macOS and Windows, so its tests run here.
+      - name: Test
+        run: |
+          go -C go vet ./cmd/tetherdesktop
+          go -C go test -race ./cmd/tetherdesktop
+
       # Signed ad hoc: the signing certificate is only for releases.
       - name: Build
         run: |
-          go -C go vet ./cmd/tetherdesktop
           scripts/build-macos.sh
           codesign --verify --strict build/TetherDesktop.app

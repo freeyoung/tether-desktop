@@ -28,6 +28,9 @@ char *td_enter_text(const char *title, const char *text, const char *ok); // NUL
 
 // The system.
 void td_notify(const char *title, const char *body, const char *reveal); // reveal: a path, or ""
+// A notification of an Android phone: a later one with the same id replaces it.
+void td_phone_notify(const char *id, const char *thread, const char *title, const char *subtitle, const char *body);
+void td_phone_unnotify(const char *id);
 void td_open_url(const char *url);
 void td_quarantine(const char *path);
 int td_login_enabled(void);

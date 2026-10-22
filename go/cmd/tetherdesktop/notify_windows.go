@@ -14,6 +14,8 @@ import (
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
+
+	"github.com/freeyoung/tether-core-go/core"
 )
 
 //go:embed winres/icon.png
@@ -88,3 +90,9 @@ func encodeCommand(script string) string {
 }
 
 func unsafePointer(p *uint16) uintptr { return uintptr(unsafe.Pointer(p)) }
+
+// Windows does not show the notifications of phones yet, so the engine does
+// not announce them (Config.ShowNotifications) and these are never called.
+func showPhoneNotification(core.Notification) {}
+
+func removePhoneNotification(fp, id string) {}

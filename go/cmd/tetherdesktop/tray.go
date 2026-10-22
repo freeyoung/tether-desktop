@@ -381,6 +381,10 @@ func (a *app) PeerOutdated(name, version string) {
 	}
 }
 
+func (a *app) NotificationPosted(n core.Notification) { go showPhoneNotification(n) }
+
+func (a *app) NotificationRemoved(fp, id string) { go removePhoneNotification(fp, id) }
+
 // MARK: - Updates
 
 // Each release publishes update.json (see release.yml). TETHER_UPDATE_URL

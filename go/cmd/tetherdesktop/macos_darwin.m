@@ -155,6 +155,26 @@ void td_notify(const char *title, const char *body, const char *reveal) {
   [UNUserNotificationCenter.currentNotificationCenter addNotificationRequest:request withCompletionHandler:nil];
 }
 
+void td_phone_notify(const char *id, const char *thread, const char *title, const char *subtitle, const char *body) {
+  if (NSBundle.mainBundle.bundleIdentifier == nil) {
+    return;
+  }
+  UNMutableNotificationContent *content = [UNMutableNotificationContent new];
+  content.title = str(title);
+  content.subtitle = str(subtitle);
+  content.body = str(body);
+  content.threadIdentifier = str(thread);
+  UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:str(id) content:content trigger:nil];
+  [UNUserNotificationCenter.currentNotificationCenter addNotificationRequest:request withCompletionHandler:nil];
+}
+
+void td_phone_unnotify(const char *id) {
+  if (NSBundle.mainBundle.bundleIdentifier == nil) {
+    return;
+  }
+  [UNUserNotificationCenter.currentNotificationCenter removeDeliveredNotificationsWithIdentifiers:@[ str(id) ]];
+}
+
 // MARK: - The pasteboard
 
 uint64_t td_change_count(void) {

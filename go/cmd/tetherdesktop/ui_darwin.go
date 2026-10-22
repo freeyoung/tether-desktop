@@ -120,6 +120,30 @@ func notifyFile(heading, text, path string) {
 	})
 }
 
+// showPhoneNotification shows a notification of an Android phone, grouped by
+// its app. A later one with the same ID replaces it.
+func showPhoneNotification(n core.Notification) {
+	title, subtitle := n.AppName, n.Title
+	if title == "" {
+		title = n.PeerName
+	}
+	withC(phoneNotificationID(n.PeerFingerprint, n.ID), func(id *C.char) {
+		withC(n.PeerFingerprint+" "+n.App, func(thread *C.char) {
+			withC(title, func(t *C.char) {
+				withC(subtitle, func(st *C.char) {
+					withC(n.Text, func(b *C.char) { C.td_phone_notify(id, thread, t, st, b) })
+				})
+			})
+		})
+	})
+}
+
+func removePhoneNotification(fp, id string) {
+	withC(phoneNotificationID(fp, id), func(s *C.char) { C.td_phone_unnotify(s) })
+}
+
+func phoneNotificationID(fp, id string) string { return "phone " + fp + " " + id }
+
 func openURL(url string) { withC(url, func(s *C.char) { C.td_open_url(s) }) }
 
 func quarantine(path string) { withC(path, func(s *C.char) { C.td_quarantine(s) }) }

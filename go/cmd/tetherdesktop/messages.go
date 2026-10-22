@@ -68,14 +68,17 @@ func (a *app) openMessages(peer, name, key string) {
 // conversation, or the window for a messages app.
 func (a *app) openFromNotification(peer, who, app string) {
 	store := a.engine.Messages()
-	if store == nil || !store.Has(peer) {
+	if store == nil {
 		return
 	}
-	name := peer[:8]
+	name, gives := peer[:8], false
 	for _, p := range a.engine.SnapshotNow().Peers {
 		if p.Fingerprint == peer {
-			name = p.Name
+			name, gives = p.Name, p.GivesMessages
 		}
+	}
+	if !gives && !store.Has(peer) {
+		return
 	}
 	if c, ok := store.Find(peer, who); ok {
 		a.openMessages(peer, name, conversationKey(c.Peer, c.Thread))
@@ -149,8 +152,9 @@ func (a *app) sendConversations() {
 	a.toPage(map[string]any{"type": "conversations", "list": a.engine.Messages().Conversations(a.peer())})
 }
 
-// MessagesAdded: show the new messages if the window shows that phone. The
-// first messages of a phone add Messages to its submenu.
+// MessagesAdded: show the new messages if the window shows that phone, and
+// refresh the menu: the first messages of a phone add Messages to its
+// submenu.
 func (a *app) MessagesAdded(peer string, _ []core.SMS) {
 	a.page.mu.Lock()
 	show := a.page.ready && a.page.peer == peer

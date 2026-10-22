@@ -166,7 +166,8 @@ func (a *app) build(snap core.Snapshot) {
 			send.SetTitle("Send Files… (Not Connected)")
 			send.Disable()
 		}
-		if store := a.engine.Messages(); store != nil && store.Has(p.Fingerprint) {
+		// A phone that gives messages, or whose messages the Mac keeps.
+		if store := a.engine.Messages(); store != nil && (p.GivesMessages || store.Has(p.Fingerprint)) {
 			onClick(item.AddSubMenuItem("Messages…", ""), func() { a.openMessages(p.Fingerprint, p.Name, "") })
 		}
 		item.AddSubMenuItem(short(p.Fingerprint), "").Disable()

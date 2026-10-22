@@ -161,7 +161,7 @@ function renderEmpty() {
   if (state.conversations.length) {
     empty.append(el("b", "", "No conversation selected"));
   } else {
-    empty.append(el("b", "", "No messages yet"), "Turn on Messages in Tether for Android, under Settings. The text messages of the phone then come here, and stay here.");
+    empty.append(el("b", "", "No text messages yet"), "The text messages of this phone come here, and stay here.");
   }
   thread.style.display = "flex";
   thread.append(empty);

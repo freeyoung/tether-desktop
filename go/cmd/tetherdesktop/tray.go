@@ -155,7 +155,7 @@ func (a *app) build(snap core.Snapshot) {
 		if p.Connected {
 			state, icon = "connected", a.greenDot
 		}
-		item := systray.AddMenuItem(fmt.Sprintf("%s (%s) — %s", p.Name, p.Kind, state), "")
+		item := systray.AddMenuItem(fmt.Sprintf("%s — %s", p.Name, state), "")
 		item.SetIcon(icon)
 		send := item.AddSubMenuItem("Send Files…", "")
 		if p.Connected {

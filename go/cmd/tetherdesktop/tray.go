@@ -176,7 +176,7 @@ func (a *app) build(snap core.Snapshot) {
 	}
 
 	systray.AddSeparator()
-	pair := systray.AddMenuItem("Pair with a Computer", "")
+	pair := systray.AddMenuItem("Pair with a Device", "")
 	for _, d := range snap.Unpaired {
 		d := d
 		onClick(pair.AddSubMenuItem(d.Name, ""), func() { a.engine.PairWithDiscovered(d.Fingerprint) })
@@ -218,7 +218,7 @@ func (a *app) route(files []string) {
 	}
 	switch len(connected) {
 	case 0:
-		notify("No device is connected", "Open Tether on the iPhone, or wait for the computer to connect.")
+		notify("No device is connected", "Open Tether on the phone, or wait for the device to connect.")
 	case 1:
 		a.engine.SendFiles(files, connected[0].Fingerprint)
 	default:
@@ -237,7 +237,7 @@ func (a *app) route(files []string) {
 }
 
 func (a *app) pairManually() {
-	text, ok := enterText("Pair with a Computer", "Enter the computer's address, for example 192.168.1.20 or linux-pc.local.\n"+
+	text, ok := enterText("Pair with a Device", "Enter the device's address, for example 192.168.1.20 or linux-pc.local.\n"+
 		"The port is 5134 unless you add another, as host:port.", "Pair")
 	if !ok {
 		return
@@ -337,9 +337,9 @@ func (a *app) OutboundPairing(r core.OutboundResult) {
 			go notify("Waiting for "+r.Peer, "Approve the request there, or run: tether accept "+a.engine.Identity.Fingerprint)
 		}
 	case "accepted":
-		go notify("Paired with "+r.Peer, "The clipboard now syncs with this computer.")
+		go notify("Paired with "+r.Peer, "The clipboard now syncs with it.")
 	case "rejected":
-		go notify("Pairing was rejected", "The other computer did not accept this "+thisDevice+".")
+		go notify("Pairing was rejected", "The other device did not accept this "+thisDevice+".")
 	case "failed":
 		go notify("Pairing failed", r.Reason)
 	}

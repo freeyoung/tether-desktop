@@ -259,7 +259,7 @@ void td_show_about(const char *url) {
   NSString *link = str(url);
   onMain(NO, ^{
     NSMutableAttributedString *credits = [[NSMutableAttributedString alloc]
-        initWithString:@"A desktop peer for Tether: the clipboard and files, shared between your iPhone and your computers.\n\n"
+        initWithString:@"A desktop peer for Tether: the clipboard and files, shared between your phones and your computers.\n\n"
             attributes:@{NSFontAttributeName : [NSFont systemFontOfSize:11]}];
     [credits appendAttributedString:[[NSAttributedString alloc]
                                         initWithString:link

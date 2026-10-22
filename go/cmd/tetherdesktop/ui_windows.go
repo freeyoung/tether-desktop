@@ -75,7 +75,7 @@ func (a *app) firewallHelp() {
 	command := fmt.Sprintf(`netsh advfirewall firewall add rule name="Tether Desktop" dir=in action=allow program="%s" protocol=TCP localport=%d profile=private`,
 		executable(), core.DefaultPort)
 	a.clipboard.Write(core.TextContent(command))
-	_ = zenity.Info("The iPhone and other computers connect to this PC on TCP port 5134.\n\n"+
+	_ = zenity.Info("Phones and other computers connect to this PC on TCP port 5134.\n\n"+
 		"If Windows asked whether to allow Tether Desktop, allow it on private networks. "+
 		"Make sure this network is set as Private in Settings > Network & internet.\n\n"+
 		"To allow it by hand, run this in an administrator terminal (it is on the clipboard now):\n\n"+command,

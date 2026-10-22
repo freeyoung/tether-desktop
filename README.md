@@ -12,7 +12,7 @@ Tether Desktop is not an official app of Tether, and the authors of Tether do no
 
 ## Features
 
-- Pairs with the iPhone app and with other computers. You approve each pairing.
+- Pairs with the iPhone app, with other computers and with Android phones. You approve each pairing.
 - Syncs clipboard text and images.
 - Receives files into Downloads. Sends files from the menu, from Finder (Services > Send with Tether Desktop) or from Explorer (Send to > Tether Desktop).
 - Opens links that the iPhone shares.
@@ -38,7 +38,7 @@ On the first start, allow the network access that the system asks for: Local Net
 
 To pair the iPhone, open Tether on it, tap the computer, and click Allow on the computer. The iPhone keeps one connection at a time.
 
-To pair a computer, choose Pair with a Computer in the menu. For `tetherd`, approve the request there or run `tether accept <fingerprint>`; the first menu item copies this computer's fingerprint. For another Tether Desktop, click Allow there. If the computer is not in the list, for example over Tailscale or across subnets, choose Enter Address.
+To pair a computer or an Android phone, choose Pair with a Device in the menu. For `tetherd`, approve the request there or run `tether accept <fingerprint>`; the first menu item copies this computer's fingerprint. For another Tether Desktop or Tether for Android, click Allow there. If the device is not in the list, for example over Tailscale or across subnets, choose Enter Address.
 
 Paired devices reconnect by themselves.
 

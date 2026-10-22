@@ -19,7 +19,7 @@ Tether Desktop is not an official app of Tether, and the authors of Tether do no
 - Shows the notifications of an Android phone with Tether for Android, on macOS.
 - Tells you when a new version is out.
 
-<img src="assets/menu-macos.png" width="675" alt="The menu on macOS: three paired devices, and the submenu of the connected one, with Send Files.">
+<img src="assets/menu-macos.png" width="675" alt="The menu on macOS: four paired devices, among them an Android phone, and the submenu of a connected one, with Send Files.">
 
 ## Install
 

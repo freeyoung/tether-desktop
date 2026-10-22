@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff; --side: #f5f5f7; --line: #e3e3e6; --text: #1d1d1f; --muted: #86868b;
+  --hover: #ebebef; --selected: #0a7cff; --selected-text: #ffffff;
+  --in: #e9e9eb; --in-text: #1d1d1f; --out: #0a7cff; --out-text: #ffffff;
+  --field: #e8e8ed; --mark: #ffe066; --chip: rgba(0, 0, 0, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e; --side: #252526; --line: #38383a; --text: #f2f2f7; --muted: #8e8e93;
+    --hover: #2f2f31; --in: #3a3a3c; --in-text: #f2f2f7;
+    --field: #353538; --mark: #8a6d00; --chip: rgba(255, 255, 255, .14);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  display: flex; background: var(--bg); color: var(--text);
+  font: 13px -apple-system, BlinkMacSystemFont, sans-serif; -webkit-user-select: none; cursor: default;
+}
+#side { width: 300px; min-width: 240px; display: flex; flex-direction: column; background: var(--side); border-right: 1px solid var(--line); }
+#search { margin: 12px; padding: 6px 10px; border: 0; border-radius: 7px; background: var(--field); color: var(--text); font: inherit; outline: none; }
+#search:focus { box-shadow: 0 0 0 3px rgba(10, 124, 255, .35); }
+#list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
+.row { padding: 8px 10px; border-radius: 8px; margin-bottom: 1px; }
+.row:hover { background: var(--hover); }
+.row.selected { background: var(--selected); color: var(--selected-text); }
+.row.selected .when, .row.selected .snippet { color: rgba(255, 255, 255, .85); }
+.top { display: flex; gap: 8px; align-items: baseline; }
+.who { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.when { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.snippet { color: var(--muted); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; }
+#main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#head { padding: 12px 20px; border-bottom: 1px solid var(--line); min-height: 52px; }
+#title { font-size: 15px; font-weight: 600; }
+#sub { color: var(--muted); font-size: 12px; margin-top: 1px; -webkit-user-select: text; }
+#thread { flex: 1; overflow-y: auto; padding: 16px 20px 24px; }
+.day { text-align: center; color: var(--muted); font-size: 11px; margin: 18px 0 8px; }
+.msg { display: flex; margin: 3px 0; }
+.msg.out { justify-content: flex-end; }
+.bubble {
+  max-width: 70%; padding: 7px 12px; border-radius: 17px; background: var(--in); color: var(--in-text);
+  white-space: pre-wrap; word-break: break-word; line-height: 1.35; -webkit-user-select: text; cursor: text;
+}
+.out .bubble { background: var(--out); color: var(--out-text); }
+.bubble.flash { animation: flash 1.6s ease-out 1; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 4px var(--mark); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.time { font-size: 10px; opacity: .65; margin-left: 8px; float: right; margin-top: 5px; }
+.code {
+  display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 10px; background: var(--chip);
+  font-weight: 600; cursor: pointer; -webkit-user-select: none;
+}
+.empty { margin: auto; text-align: center; color: var(--muted); max-width: 320px; line-height: 1.5; padding: 24px; }
+.empty b { color: var(--text); font-size: 15px; display: block; margin-bottom: 6px; }
+#toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, .78); color: #fff;
+  padding: 6px 14px; border-radius: 14px; font-size: 12px; opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="side">
+  <input id="search" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
+  <div id="list"></div>
+</div>
+<div id="main">
+  <div id="head"><div id="title"></div><div id="sub"></div></div>
+  <div id="thread"></div>
+</div>
+<div id="toast"></div>
+<script>
+"use strict";
+// The Messages window of Tether Desktop. The app sends data with
+// tether.receive(); the page asks with post().
+const state = { conversations: [], selected: null, query: "", results: [], focus: null };
+const $ = id => document.getElementById(id);
+
+function post(message) { window.webkit.messageHandlers.tether.postMessage(JSON.stringify(message)); }
+const keyOf = c => c.peer + "|" + c.thread;
+const titleOf = c => c.name || c.address || "Unknown";
+
+const dayFormat = new Intl.DateTimeFormat(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const shortDate = new Intl.DateTimeFormat(undefined, { year: "2-digit", month: "numeric", day: "numeric" });
+function when(ms) {
+  const d = new Date(ms), now = new Date();
+  if (d.toDateString() === now.toDateString()) return timeFormat.format(d);
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  if (now - d < 6 * 864e5) return new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(d);
+  return shortDate.format(d);
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+// Text with the words of the query marked.
+function marked(text, query) {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const span = el("span");
+  if (!words.length) { span.textContent = text; return span; }
+  const lower = text.toLowerCase();
+  const hits = [];
+  for (const w of words) for (let i = lower.indexOf(w); i >= 0; i = lower.indexOf(w, i + w.length)) hits.push([i, i + w.length]);
+  hits.sort((a, b) => a[0] - b[0]);
+  let at = 0;
+  for (const [s, e] of hits) {
+    if (s < at) continue;
+    span.append(text.slice(at, s), el("mark", "", text.slice(s, e)));
+    at = e;
+  }
+  span.append(text.slice(at));
+  return span;
+}
+
+function renderList() {
+  const list = $("list");
+  list.textContent = "";
+  if (state.query) {
+    for (const r of state.results) {
+      const row = el("div", "row");
+      const top = el("div", "top");
+      top.append(el("div", "who", titleOf(r)), el("div", "when", when(r.date)));
+      const snippet = el("div", "snippet");
+      snippet.append(marked((r.sent ? "You: " : "") + r.body, state.query));
+      row.append(top, snippet);
+      row.onclick = () => select(keyOf(r), r.id);
+      list.append(row);
+    }
+    if (!state.results.length) list.append(el("div", "empty", "No results"));
+    return;
+  }
+  for (const c of state.conversations) {
+    const row = el("div", "row" + (keyOf(c) === state.selected ? " selected" : ""));
+    const top = el("div", "top");
+    top.append(el("div", "who", titleOf(c)), el("div", "when", when(c.last.date)));
+    row.append(top, el("div", "snippet", (c.last.sent ? "You: " : "") + c.last.body));
+    row.onclick = () => select(keyOf(c));
+    list.append(row);
+  }
+}
+
+function renderEmpty() {
+  $("title").textContent = "";
+  $("sub").textContent = "";
+  const thread = $("thread");
+  thread.textContent = "";
+  const empty = el("div", "empty");
+  if (state.conversations.length) {
+    empty.append(el("b", "", "No conversation selected"));
+  } else {
+    empty.append(el("b", "", "No messages yet"), "Turn on Messages in Tether for Android, under Settings. The text messages of the phone then come here, and stay here.");
+  }
+  thread.style.display = "flex";
+  thread.append(empty);
+}
+
+function select(key, focus) {
+  state.selected = key;
+  state.focus = focus || null;
+  const [peer, thread] = key.split("|");
+  post({ op: "thread", peer, thread: Number(thread) });
+  renderList();
+}
+
+function renderThread(data) {
+  if (data.key !== state.selected) return;
+  const c = state.conversations.find(c => keyOf(c) === data.key) || data;
+  $("title").textContent = titleOf(c);
+  $("sub").textContent = c.name ? c.address : "";
+  const thread = $("thread");
+  const atBottom = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 40;
+  const keep = thread.dataset.key === data.key;
+  thread.textContent = "";
+  thread.style.display = "block";
+  thread.dataset.key = data.key;
+  let day = "";
+  let target = null;
+  for (const m of data.messages) {
+    const d = dayFormat.format(new Date(m.date));
+    if (d !== day) { thread.append(el("div", "day", d)); day = d; }
+    const row = el("div", "msg" + (m.sent ? " out" : ""));
+    const bubble = el("div", "bubble");
+    bubble.append(m.body, el("span", "time", timeFormat.format(new Date(m.date))));
+    if (m.code) {
+      bubble.append(el("br"));
+      const chip = el("span", "code", "Copy " + m.code);
+      chip.onclick = () => { post({ op: "copy", text: m.code }); toast("Copied " + m.code); };
+      bubble.append(chip);
+    }
+    if (m.id === state.focus) target = bubble;
+    row.append(bubble);
+    thread.append(row);
+  }
+  if (target) {
+    target.scrollIntoView({ block: "center" });
+    target.classList.add("flash");
+    state.focus = null;
+  } else if (!keep || atBottom) {
+    thread.scrollTop = thread.scrollHeight;
+  }
+}
+
+let toastTimer;
+function toast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+let searchTimer;
+$("search").addEventListener("input", e => {
+  state.query = e.target.value.trim();
+  clearTimeout(searchTimer);
+  if (!state.query) { state.results = []; renderList(); return; }
+  searchTimer = setTimeout(() => post({ op: "search", q: state.query }), 120);
+});
+document.addEventListener("keydown", e => {
+  if (e.metaKey && e.key === "f") { e.preventDefault(); $("search").focus(); $("search").select(); }
+  if (e.key === "Escape" && document.activeElement === $("search")) { $("search").value = ""; state.query = ""; renderList(); }
+});
+
+window.tether = {
+  receive(data) {
+    switch (data.type) {
+      case "conversations":
+        state.conversations = data.list;
+        if (state.selected && !state.conversations.some(c => keyOf(c) === state.selected)) state.selected = null;
+        renderList();
+        if (state.selected) select(state.selected, state.focus);
+        else renderEmpty();
+        break;
+      case "thread":
+        renderThread(data);
+        break;
+      case "search":
+        if (data.q === state.query) { state.results = data.results; renderList(); }
+        break;
+      case "open":
+        $("search").value = ""; state.query = "";
+        select(data.key);
+        break;
+    }
+  },
+};
+post({ op: "ready" });
+</script>
+</body>
+</html>

@@ -37,7 +37,7 @@ func main() {
 	engine, err := core.NewEngine(core.Config{
 		SupportDir: support, DownloadsDir: filepath.Join(home, "Downloads"), DeviceName: computerName(),
 		IdentityFile: filepath.Join(support, identityFile), IdentityPassword: identityPassword,
-		MarkDownloaded: quarantine, Log: logLine, ShowNotifications: true,
+		MarkDownloaded: quarantine, Log: logLine, ShowNotifications: true, KeepMessages: true,
 	}, clipboard, newDiscovery())
 	if err != nil {
 		logLine("cannot start: " + err.Error())

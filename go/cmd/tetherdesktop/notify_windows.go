@@ -93,6 +93,12 @@ func unsafePointer(p *uint16) uintptr { return uintptr(unsafe.Pointer(p)) }
 
 // Windows does not show the notifications of phones yet, so the engine does
 // not announce them (Config.ShowNotifications) and these are never called.
-func showPhoneNotification(core.Notification) {}
+func showPhoneNotification(core.Notification, string) {}
+
+// Nor does it keep text messages (Config.KeepMessages), so it has no
+// Messages window.
+func showMessagesWindow(string, string) {}
+
+func evalInMessages(string) {}
 
 func removePhoneNotification(fp, id string) {}

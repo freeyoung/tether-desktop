@@ -16,7 +16,8 @@ Tether Desktop is not an official app of Tether, and the authors of Tether do no
 - Syncs clipboard text and images.
 - Receives files into Downloads. Sends files from the menu, from Finder (Services > Send with Tether Desktop) or from Explorer (Send to > Tether Desktop).
 - Opens links that the iPhone shares.
-- Shows the notifications of an Android phone with Tether for Android, on macOS.
+- Shows the notifications of an Android phone with Tether for Android, on macOS. A Copy Code button copies a verification code.
+- Keeps the text messages of an Android phone, on macOS: Messages in the submenu of the phone opens them, with search. A click on the notification of a text message opens its conversation.
 - Tells you when a new version is out.
 
 <img src="assets/menu-macos.png" width="675" alt="The menu on macOS: four paired devices, among them an Android phone, and the submenu of a connected one, with Send Files.">
@@ -50,13 +51,14 @@ Paired devices reconnect by themselves.
 | Settings | `~/Library/Application Support/TetherDesktop/` | `%APPDATA%\TetherDesktop\` |
 | Log | `log stream --predicate 'subsystem == "TetherDesktop"'` | `%LOCALAPPDATA%\TetherDesktop\tetherdesktop.log` |
 
-Received files go to Downloads, marked as downloaded from the internet.
+Received files go to Downloads, marked as downloaded from the internet. On macOS, the text messages of Android phones are in `messages.jsonl` in the settings folder.
 
 ## Security
 
 - A device can only ask to pair until you approve it. Paired devices are pinned by the SHA-256 of their certificate.
 - The private key is in the settings folder, readable only by you. On Windows it is also encrypted with DPAPI.
-- Logs never hold clipboard or file content, and content that a password manager marks as secret is not synced.
+- The text messages are readable only by you.
+- Logs never hold clipboard, file or message content, and content that a password manager marks as secret is not synced.
 - A received file keeps only its plain name, and goes to Downloads only when it is complete. Limits: 4 GiB for a file, 32 MiB for a clipboard image.
 - Only http and https links open.
 

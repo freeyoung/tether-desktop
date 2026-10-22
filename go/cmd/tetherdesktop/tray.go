@@ -65,6 +65,8 @@ type app struct {
 	update   UpdateState
 	latest   string
 	outdated map[string]bool // peers we told the user about
+
+	page messagesPageState
 }
 
 func newApp(engine *core.Engine, clipboard core.Clipboard) *app {
@@ -163,6 +165,9 @@ func (a *app) build(snap core.Snapshot) {
 		} else {
 			send.SetTitle("Send Files… (Not Connected)")
 			send.Disable()
+		}
+		if store := a.engine.Messages(); store != nil && store.Has(p.Fingerprint) {
+			onClick(item.AddSubMenuItem("Messages…", ""), func() { a.openMessages(p.Fingerprint, p.Name, "") })
 		}
 		item.AddSubMenuItem(short(p.Fingerprint), "").Disable()
 		onClick(item.AddSubMenuItem("Forget", ""), func() { a.engine.Forget(p.Fingerprint) })
@@ -381,7 +386,10 @@ func (a *app) PeerOutdated(name, version string) {
 	}
 }
 
-func (a *app) NotificationPosted(n core.Notification) { go showPhoneNotification(n) }
+// NotificationPosted: a code in the text gets a Copy Code button.
+func (a *app) NotificationPosted(n core.Notification) {
+	go showPhoneNotification(n, core.FindCode(n.Text))
+}
 
 func (a *app) NotificationRemoved(fp, id string) { go removePhoneNotification(fp, id) }
 

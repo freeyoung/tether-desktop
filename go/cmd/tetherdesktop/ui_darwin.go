@@ -2,7 +2,7 @@ package main
 
 /*
 #cgo CFLAGS: -x objective-c -fobjc-arc
-#cgo LDFLAGS: -framework Cocoa -framework UserNotifications -framework ServiceManagement -framework SystemConfiguration
+#cgo LDFLAGS: -framework Cocoa -framework WebKit -framework UserNotifications -framework ServiceManagement -framework SystemConfiguration
 #include <stdlib.h>
 #include "macos_darwin.h"
 */
@@ -121,8 +121,9 @@ func notifyFile(heading, text, path string) {
 }
 
 // showPhoneNotification shows a notification of an Android phone, grouped by
-// its app. A later one with the same ID replaces it.
-func showPhoneNotification(n core.Notification) {
+// its app. A later one with the same ID replaces it. A click calls
+// tdPhoneNotificationClicked; code, if not "", gets a Copy Code button.
+func showPhoneNotification(n core.Notification, code string) {
 	title, subtitle := n.AppName, n.Title
 	if title == "" {
 		title = n.PeerName
@@ -131,12 +132,26 @@ func showPhoneNotification(n core.Notification) {
 		withC(n.PeerFingerprint+" "+n.App, func(thread *C.char) {
 			withC(title, func(t *C.char) {
 				withC(subtitle, func(st *C.char) {
-					withC(n.Text, func(b *C.char) { C.td_phone_notify(id, thread, t, st, b) })
+					withC(n.Text, func(b *C.char) {
+						withC(n.PeerFingerprint, func(peer *C.char) {
+							withC(n.App, func(app *C.char) {
+								withC(code, func(c *C.char) { C.td_phone_notify(id, thread, t, st, b, peer, app, c) })
+							})
+						})
+					})
 				})
 			})
 		})
 	})
 }
+
+func showMessagesWindow(page, title string) {
+	withC(page, func(p *C.char) {
+		withC(title, func(t *C.char) { C.td_messages_show(p, t) })
+	})
+}
+
+func evalInMessages(js string) { withC(js, func(s *C.char) { C.td_messages_eval(s) }) }
 
 func removePhoneNotification(fp, id string) {
 	withC(phoneNotificationID(fp, id), func(s *C.char) { C.td_phone_unnotify(s) })
@@ -189,6 +204,35 @@ func tdServiceFiles(paths *C.char) {
 	files := strings.Split(C.GoString(paths), "\n")
 	if a := current.Load(); a != nil {
 		go a.route(files)
+	}
+}
+
+// tdWebMessage: a request of the Messages page, on the main thread.
+//
+//export tdWebMessage
+func tdWebMessage(message *C.char) {
+	raw := C.GoString(message)
+	if a := current.Load(); a != nil {
+		go a.handlePage(raw)
+	}
+}
+
+// tdPhoneNotificationClicked: who is the title of the notification, the
+// sender in a messages app.
+//
+//export tdPhoneNotificationClicked
+func tdPhoneNotificationClicked(peer, who, app *C.char) {
+	p, w, ap := C.GoString(peer), C.GoString(who), C.GoString(app)
+	if a := current.Load(); a != nil {
+		go a.openFromNotification(p, w, ap)
+	}
+}
+
+//export tdCopyCode
+func tdCopyCode(code *C.char) {
+	text := C.GoString(code)
+	if a := current.Load(); a != nil {
+		go a.clipboard.Write(core.TextContent(text))
 	}
 }
 

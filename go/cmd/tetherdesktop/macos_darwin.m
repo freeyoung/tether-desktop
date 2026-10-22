@@ -2,6 +2,7 @@
 #import <ServiceManagement/ServiceManagement.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <UserNotifications/UserNotifications.h>
+#import <WebKit/WebKit.h>
 #include <arpa/inet.h>
 #include <dns_sd.h>
 #include <os/log.h>
@@ -84,9 +85,15 @@ char *td_computer_name(void) {
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
     didReceiveNotificationResponse:(UNNotificationResponse *)response
              withCompletionHandler:(void (^)(void))completionHandler {
-  NSString *path = response.notification.request.content.userInfo[@"reveal"];
+  NSDictionary *info = response.notification.request.content.userInfo;
+  NSString *path = info[@"reveal"];
   if (path.length > 0) {
     [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:path] ]];
+  } else if ([response.actionIdentifier isEqualToString:@"copy"]) {
+    tdCopyCode((char *)[info[@"code"] UTF8String]);
+  } else if ([response.actionIdentifier isEqualToString:UNNotificationDefaultActionIdentifier] && [info[@"peer"] length] > 0) {
+    tdPhoneNotificationClicked((char *)[info[@"peer"] UTF8String], (char *)[info[@"who"] UTF8String],
+                               (char *)[info[@"app"] UTF8String]);
   }
   completionHandler();
 }
@@ -116,16 +123,45 @@ char *td_computer_name(void) {
 
 static TDDelegate *delegate;
 
+// A menu bar app shows no main menu, but its key equivalents still work:
+// Copy and Paste in dialogs and in the Messages window, and Close Window.
+static void addMainMenu(void) {
+  NSMenu *main = [NSMenu new];
+  NSMenu *edit = [[NSMenu alloc] initWithTitle:@"Edit"];
+  [edit addItemWithTitle:@"Undo" action:@selector(undo:) keyEquivalent:@"z"];
+  [edit addItemWithTitle:@"Redo" action:@selector(redo:) keyEquivalent:@"Z"];
+  [edit addItem:NSMenuItem.separatorItem];
+  [edit addItemWithTitle:@"Cut" action:@selector(cut:) keyEquivalent:@"x"];
+  [edit addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
+  [edit addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];
+  [edit addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
+  NSMenu *window = [[NSMenu alloc] initWithTitle:@"Window"];
+  [window addItemWithTitle:@"Close" action:@selector(performClose:) keyEquivalent:@"w"];
+  [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
+  for (NSMenu *menu in @[ edit, window ]) {
+    NSMenuItem *item = [NSMenuItem new];
+    item.submenu = menu;
+    [main addItem:item];
+  }
+  NSApp.mainMenu = main;
+}
+
 void td_init(void) {
   onMain(YES, ^{
     delegate = [TDDelegate new];
     if (NSBundle.mainBundle.bundleIdentifier != nil) {
       UNUserNotificationCenter *center = UNUserNotificationCenter.currentNotificationCenter;
       center.delegate = delegate;
+      UNNotificationAction *copy = [UNNotificationAction actionWithIdentifier:@"copy" title:@"Copy Code" options:0];
+      [center setNotificationCategories:[NSSet setWithObject:[UNNotificationCategory categoryWithIdentifier:@"code"
+                                                                                                   actions:@[ copy ]
+                                                                                         intentIdentifiers:@[]
+                                                                                                   options:0]]];
       [center requestAuthorizationWithOptions:UNAuthorizationOptionAlert
                             completionHandler:^(BOOL granted, NSError *error){
                             }];
     }
+    addMainMenu();
     NSApp.servicesProvider = delegate;
     NSUpdateDynamicServices();
     // Sessions with computers do not survive a long sleep.
@@ -155,7 +191,8 @@ void td_notify(const char *title, const char *body, const char *reveal) {
   [UNUserNotificationCenter.currentNotificationCenter addNotificationRequest:request withCompletionHandler:nil];
 }
 
-void td_phone_notify(const char *id, const char *thread, const char *title, const char *subtitle, const char *body) {
+void td_phone_notify(const char *id, const char *thread, const char *title, const char *subtitle, const char *body,
+                     const char *peer, const char *app, const char *code) {
   if (NSBundle.mainBundle.bundleIdentifier == nil) {
     return;
   }
@@ -164,6 +201,10 @@ void td_phone_notify(const char *id, const char *thread, const char *title, cons
   content.subtitle = str(subtitle);
   content.body = str(body);
   content.threadIdentifier = str(thread);
+  content.userInfo = @{@"peer" : str(peer), @"who" : str(subtitle), @"app" : str(app), @"code" : str(code)};
+  if (str(code).length > 0) {
+    content.categoryIdentifier = @"code";
+  }
   UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:str(id) content:content trigger:nil];
   [UNUserNotificationCenter.currentNotificationCenter addNotificationRequest:request withCompletionHandler:nil];
 }
@@ -543,4 +584,77 @@ void td_dnssd_stop(void) {
     DNSServiceRefDeallocate(connection);
     connection = NULL;
   }
+}
+
+// MARK: - The Messages window
+
+// A web view with messages.html (messages.go).
+
+@interface TDMessages : NSObject <WKScriptMessageHandler, WKNavigationDelegate>
+@property(strong) NSWindow *window;
+@property(strong) WKWebView *web;
+@end
+
+@implementation TDMessages
+
+- (void)userContentController:(WKUserContentController *)controller didReceiveScriptMessage:(WKScriptMessage *)message {
+  if ([message.body isKindOfClass:NSString.class]) {
+    tdWebMessage((char *)[(NSString *)message.body UTF8String]);
+  }
+}
+
+// The page has no links of its own: open the ones in messages in the browser.
+- (void)webView:(WKWebView *)webView
+    decidePolicyForNavigationAction:(WKNavigationAction *)action
+                    decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+  if (action.navigationType == WKNavigationTypeLinkActivated) {
+    [NSWorkspace.sharedWorkspace openURL:action.request.URL];
+    decisionHandler(WKNavigationActionPolicyCancel);
+    return;
+  }
+  decisionHandler(WKNavigationActionPolicyAllow);
+}
+
+@end
+
+static TDMessages *messages;
+
+void td_messages_show(const char *html, const char *title) {
+  NSString *page = str(html), *name = str(title);
+  onMain(NO, ^{
+    if (messages == nil) {
+      messages = [TDMessages new];
+      WKWebViewConfiguration *config = [WKWebViewConfiguration new];
+      [config.userContentController addScriptMessageHandler:messages name:@"tether"];
+      NSWindow *window = [[NSWindow alloc]
+          initWithContentRect:NSMakeRect(0, 0, 920, 620)
+                    styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
+                              NSWindowStyleMaskResizable
+                      backing:NSBackingStoreBuffered
+                        defer:NO];
+      window.releasedWhenClosed = NO;
+      window.minSize = NSMakeSize(640, 400);
+      [window center];
+      [window setFrameAutosaveName:@"Messages"];
+      WKWebView *web = [[WKWebView alloc] initWithFrame:window.contentView.bounds configuration:config];
+      web.navigationDelegate = messages;
+      web.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+      window.contentView = web;
+      messages.window = window;
+      messages.web = web;
+      [web loadHTMLString:page baseURL:nil];
+    }
+    messages.window.title = name;
+    // From the menu bar, activate alone may leave the window behind others.
+    [NSApp activate];
+    [messages.window makeKeyAndOrderFront:nil];
+    [messages.window orderFrontRegardless];
+  });
+}
+
+void td_messages_eval(const char *js) {
+  NSString *script = str(js);
+  onMain(NO, ^{
+    [messages.web evaluateJavaScript:script completionHandler:nil];
+  });
 }

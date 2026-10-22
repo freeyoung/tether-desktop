@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	fyne.io/systray v1.12.2
 	github.com/Microsoft/go-winio v0.6.2
-	github.com/freeyoung/tether-core-go v0.6.0
+	github.com/freeyoung/tether-core-go v0.7.0
 	github.com/go-ole/go-ole v1.3.0
 	github.com/ncruces/zenity v0.10.15
 	golang.org/x/sys v0.49.0
